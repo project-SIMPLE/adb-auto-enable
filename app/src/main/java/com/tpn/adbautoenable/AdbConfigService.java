@@ -217,6 +217,83 @@ public class AdbConfigService extends Service {
         Log.i(TAG, "Boot stabilization complete");
     }
 
+    private void autoClickAdbPopup() {
+        new Thread(() -> {
+            try {
+                Log.i(TAG, "Starting popup auto-click monitor...");
+                updateNotification("Waiting for ADB popup...");
+
+                // Wait a moment for popup to appear
+                Thread.sleep(2000);
+
+                // Poll for up to 20 seconds
+                for (int i = 0; i < 40; i++) {
+                    try {
+                        // Check if WifiDebuggingAlertActivity is showing
+                        Process checkProcess = Runtime.getRuntime().exec(new String[]{
+                                "sh", "-c", "dumpsys window windows | grep WifiDebuggingAlertActivity"
+                        });
+
+                        java.io.BufferedReader reader = new java.io.BufferedReader(
+                                new java.io.InputStreamReader(checkProcess.getInputStream()));
+                        String line = reader.readLine();
+                        reader.close();
+                        checkProcess.waitFor();
+
+                        if (line != null && line.contains("WifiDebuggingAlertActivity")) {
+                            Log.i(TAG, "ADB popup detected!");
+
+                            // Wait for UI to stabilize
+                            Thread.sleep(800);
+
+                            // Try with root first (if available)
+                            boolean clicked = false;
+                            try {
+                                Process rootClick = Runtime.getRuntime().exec(new String[]{
+                                        "su", "-c", "input keyevent 66"
+                                });
+                                int exitCode = rootClick.waitFor();
+                                if (exitCode == 0) {
+                                    clicked = true;
+                                    Log.i(TAG, "Auto-clicked popup with root");
+                                }
+                            } catch (Exception e) {
+                                Log.w(TAG, "Root click failed, trying without root: " + e.getMessage());
+                            }
+
+                            // Fallback: try without root
+                            if (!clicked) {
+                                Process normalClick = Runtime.getRuntime().exec(new String[]{
+                                        "input", "keyevent", "66"
+                                });
+                                normalClick.waitFor();
+                                Log.i(TAG, "Auto-clicked popup without root");
+                            }
+
+                            updateNotification("ADB popup auto-clicked");
+
+                            // Wait to ensure click is processed
+                            Thread.sleep(1000);
+                            return; // Exit successfully
+                        }
+
+                    } catch (Exception e) {
+                        Log.w(TAG, "Error checking for popup: " + e.getMessage());
+                    }
+
+                    // Wait before next check
+                    Thread.sleep(500);
+                }
+
+                Log.w(TAG, "Popup auto-click timeout (popup may not have appeared)");
+
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Auto-click thread interrupted: " + e.getMessage());
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+
     private void configureAdbWithRetries() {
         for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
             Log.i(TAG, "Configuration attempt " + attempt + " of " + MAX_RETRY_ATTEMPTS);
@@ -259,7 +336,10 @@ public class AdbConfigService extends Service {
 
             Log.i(TAG, "Step 2: Waiting for ADB service to start...");
             updateNotification("Waiting for ADB service...");
-            Thread.sleep(15000);
+
+//            Thread.sleep(2000);
+            autoClickAdbPopup();
+            Thread.sleep(12000);
 
             String deviceIP = getDeviceIP();
             Log.i(TAG, "Device IP: " + deviceIP);
