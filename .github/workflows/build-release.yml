@@ -37,7 +37,7 @@ jobs:
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PversionName="${GITHUB_REF_NAME#v}" -PversionCode="$GITHUB_RUN_NUMBER"
         env:
           KEYSTORE_FILE: ../keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -47,7 +47,7 @@ jobs:
       - name: Get version name
         id: version
         run: |
-          echo "VERSION_NAME=$(grep 'versionName' app/build.gradle | awk '{print $3}' | tr -d '\"')" >> $GITHUB_OUTPUT
+          echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4

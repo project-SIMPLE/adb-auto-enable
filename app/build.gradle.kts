@@ -10,8 +10,8 @@ android {
         applicationId = "com.tpn.adbautoenable"
         minSdk = 21
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.2.7"
+        versionCode = (project.findProperty("versionCode") as String? ?: "1").toInt()
+        versionName = project.findProperty("versionName") as String? ?: "dev"
     }
 
     signingConfigs {
