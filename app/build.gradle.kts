@@ -41,15 +41,4 @@ android {
 }
 
 dependencies {
-    implementation("org.nanohttpd:nanohttpd:2.3.1")
-
-    // libadb-android - Pure Java ADB with pairing support
-    implementation("com.github.MuntashirAkon:libadb-android:1.0.1")
-
-    // Conscrypt for TLS support (required for pairing)
-    implementation("org.conscrypt:conscrypt-android:2.5.2")
-
-    // BouncyCastle for certificate generation
-    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 }
