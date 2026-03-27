@@ -6,8 +6,16 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.ContentObserver;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
@@ -22,8 +30,14 @@ public class AdbConfigService extends Service {
     private static final int INITIAL_BOOT_DELAY_SECONDS = 10;
     private static final int MAX_RETRY_ATTEMPTS = 3;
     private static final int RETRY_DELAY_SECONDS = 10;
+    private static final int MONITOR_INTERVAL_SECONDS = 30;
 
     private volatile boolean isConfiguring = false;
+    private volatile boolean isMonitoring = false;
+
+    private ConnectivityManager.NetworkCallback networkCallback;
+    private ContentObserver adbSettingObserver;
+    private HandlerThread observerThread;
 
     @Override
     public void onCreate() {
@@ -31,6 +45,8 @@ public class AdbConfigService extends Service {
         Log.i(TAG, "AdbConfigService onCreate()");
         createNotificationChannel();
         startForeground(1, createNotification("ADB Auto-Enable active"));
+        registerAdbSettingObserver();
+        registerNetworkCallback();
     }
 
     @Override
@@ -51,6 +67,13 @@ public class AdbConfigService extends Service {
                 } finally {
                     isConfiguring = false;
                 }
+                startMonitoringLoop();
+            }).start();
+        } else if (!bootConfig) {
+            // Service restarted by Android (START_STICKY) — enable immediately then monitor
+            new Thread(() -> {
+                configureAdbWithRetries();
+                startMonitoringLoop();
             }).start();
         }
 
@@ -61,6 +84,96 @@ public class AdbConfigService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        isMonitoring = false;
+
+        if (adbSettingObserver != null) {
+            getContentResolver().unregisterContentObserver(adbSettingObserver);
+        }
+        if (observerThread != null) {
+            observerThread.quit();
+        }
+        if (networkCallback != null) {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) cm.unregisterNetworkCallback(networkCallback);
+        }
+        Log.i(TAG, "AdbConfigService onDestroy()");
+    }
+
+    // --- Reactive: fires instantly when adb_wifi_enabled changes ---
+
+    private void registerAdbSettingObserver() {
+        observerThread = new HandlerThread("AdbObserver");
+        observerThread.start();
+        Handler handler = new Handler(observerThread.getLooper());
+
+        Uri settingUri = Settings.Global.getUriFor("adb_wifi_enabled");
+        adbSettingObserver = new ContentObserver(handler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                int current = Settings.Global.getInt(getContentResolver(), "adb_wifi_enabled", 0);
+                if (current != 1) {
+                    Log.w(TAG, "ContentObserver: adb_wifi_enabled changed to 0 — re-enabling");
+                    configureAdbWithRetries();
+                }
+            }
+        };
+
+        getContentResolver().registerContentObserver(settingUri, false, adbSettingObserver);
+        Log.i(TAG, "ContentObserver registered for adb_wifi_enabled");
+    }
+
+    // --- Reactive: fires when a new WiFi network becomes available ---
+
+    private void registerNetworkCallback() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return;
+
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(Network network) {
+                Log.i(TAG, "Network available — ensuring ADB is enabled");
+                configureAdbWithRetries();
+            }
+        };
+
+        NetworkRequest request = new NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .build();
+        cm.registerNetworkCallback(request, networkCallback);
+        Log.i(TAG, "Network callback registered");
+    }
+
+    // --- Backup: polling loop, belt-and-suspenders ---
+
+    private void startMonitoringLoop() {
+        if (isMonitoring) return;
+        isMonitoring = true;
+        Log.i(TAG, "Starting ADB poll loop (every " + MONITOR_INTERVAL_SECONDS + "s)");
+        new Thread(() -> {
+            while (isMonitoring) {
+                try {
+                    Thread.sleep(MONITOR_INTERVAL_SECONDS * 1000L);
+                    int current = Settings.Global.getInt(getContentResolver(), "adb_wifi_enabled", 0);
+                    if (current != 1) {
+                        Log.w(TAG, "Poll: ADB disabled — re-enabling");
+                        configureAdbWithRetries();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    Log.e(TAG, "Poll loop error", e);
+                }
+            }
+            Log.i(TAG, "Poll loop stopped");
+        }).start();
+    }
+
+    // --- Boot sequence ---
 
     private void waitForWifiConnection() throws InterruptedException {
         Log.i(TAG, "Waiting for WiFi connection...");
@@ -93,7 +206,9 @@ public class AdbConfigService extends Service {
         Log.i(TAG, "Boot stabilization complete");
     }
 
-    private void configureAdbWithRetries() {
+    // --- Core enable logic ---
+
+    private synchronized void configureAdbWithRetries() {
         for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
             Log.i(TAG, "ADB enable attempt " + attempt + "/" + MAX_RETRY_ATTEMPTS);
             if (attempt == 1) updateNotification("Enabling ADB...");
@@ -113,7 +228,7 @@ public class AdbConfigService extends Service {
             }
         }
         Log.e(TAG, "All " + MAX_RETRY_ATTEMPTS + " attempts failed");
-        updateNotification("ADB enable failed");
+        updateNotification("ADB enable failed — retrying...");
     }
 
     private boolean enableAdb() {
@@ -129,6 +244,8 @@ public class AdbConfigService extends Service {
             return false;
         }
     }
+
+    // --- Helpers ---
 
     private String getDeviceIP() {
         try {
