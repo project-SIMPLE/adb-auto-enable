@@ -226,42 +226,45 @@ public class AdbConfigService extends Service {
 
     // --- Core enable logic ---
 
-    private synchronized void configureAdbWithRetries() {
-        for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
-            Log.i(TAG, "ADB enable attempt " + attempt + "/" + MAX_RETRY_ATTEMPTS);
-            if (attempt == 1) updateNotification("Enabling ADB...");
-            if (enableAdb()) {
-                Log.i(TAG, "ADB enabled on attempt " + attempt);
-                updateNotification("ADB Auto-Enable active");
-                return;
-            }
-            if (attempt < MAX_RETRY_ATTEMPTS) {
-                Log.i(TAG, "Attempt " + attempt + " failed, retrying in " + RETRY_DELAY_SECONDS + "s...");
-                try {
-                    Thread.sleep(RETRY_DELAY_SECONDS * 1000L);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
-        }
-        Log.e(TAG, "All " + MAX_RETRY_ATTEMPTS + " attempts failed");
-        updateNotification("ADB enable failed — retrying...");
-    }
+    private volatile boolean isOperationInProgress = false;
 
-    private boolean enableAdb() {
-        try {
-            lastEnableTimestampMs = System.currentTimeMillis();
-            Settings.Global.putInt(getContentResolver(), "adb_wifi_enabled", 1);
-            Log.i(TAG, "adb_wifi_enabled = 1");
-            return true;
-        } catch (SecurityException e) {
-            Log.e(TAG, "Permission denied — grant WRITE_SECURE_SETTINGS via ADB", e);
-            return false;
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to enable ADB", e);
-            return false;
+    private synchronized void configureAdbWithRetries() {
+        if (isOperationInProgress) {
+            Log.d(TAG, "Configuration already in progress, skipping");
+            return;
         }
+        isOperationInProgress = true;
+        
+        new Thread(() -> {
+            try {
+                for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+                    Log.i(TAG, "ADB enable attempt " + attempt + "/" + MAX_RETRY_ATTEMPTS);
+                    if (attempt == 1) updateNotification("Enabling ADB...");
+                    
+                    lastEnableTimestampMs = System.currentTimeMillis();
+                    Settings.Global.putInt(getContentResolver(), "adb_wifi_enabled", 1);
+                    
+                    // Wait a bit to see if it sticks or if a popup appears
+                    Thread.sleep(2000);
+                    
+                    int current = Settings.Global.getInt(getContentResolver(), "adb_wifi_enabled", 0);
+                    if (current == 1) {
+                        Log.i(TAG, "ADB confirmed enabled");
+                        updateNotification("ADB Auto-Enable active");
+                        return;
+                    }
+
+                    if (attempt < MAX_RETRY_ATTEMPTS) {
+                        Log.i(TAG, "Attempt " + attempt + " failed (possibly pending popup), waiting...");
+                        Thread.sleep(RETRY_DELAY_SECONDS * 1000L);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error in configuration thread", e);
+            } finally {
+                isOperationInProgress = false;
+            }
+        }).start();
     }
 
     // --- Accessibility service self-enable ---

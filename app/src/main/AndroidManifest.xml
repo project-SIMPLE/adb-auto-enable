@@ -19,8 +19,7 @@
 
         <activity
             android:name="com.tpn.adbautoenable.MainActivity"
-            android:exported="true"
-            android:theme="@android:style/Theme.NoDisplay">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -30,7 +29,7 @@
         <service
             android:name="com.tpn.adbautoenable.AdbConfigService"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
