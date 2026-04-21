@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.tpn.adbautoenable"
+    namespace = "eu.project_simple.adbautoenable"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.tpn.adbautoenable"
+        applicationId = "eu.project_simple.adbautoenable"
         minSdk = 21
         targetSdk = 34
         versionCode = (project.findProperty("versionCode") as String? ?: "1").toInt()

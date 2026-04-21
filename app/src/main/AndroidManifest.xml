@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.tpn.adbautoenable">
+    package="eu.project_simple.adbautoenable">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
@@ -18,7 +18,7 @@
         android:supportsRtl="true">
 
         <activity
-            android:name="com.tpn.adbautoenable.MainActivity"
+            android:name="eu.project_simple.adbautoenable.MainActivity"
             android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
@@ -28,7 +28,7 @@
         </activity>
 
         <service
-            android:name="com.tpn.adbautoenable.AdbConfigService"
+            android:name="eu.project_simple.adbautoenable.AdbConfigService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="specialUse">
@@ -38,7 +38,7 @@
         </service>
 
         <service
-            android:name="com.tpn.adbautoenable.AdbPopupAccessibilityService"
+            android:name="eu.project_simple.adbautoenable.AdbPopupAccessibilityService"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -51,7 +51,7 @@
         </service>
 
         <receiver
-            android:name="com.tpn.adbautoenable.BootReceiver"
+            android:name="eu.project_simple.adbautoenable.BootReceiver"
             android:enabled="true"
             android:exported="true"
             android:directBootAware="true"

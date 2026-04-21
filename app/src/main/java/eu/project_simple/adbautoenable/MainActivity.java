@@ -1,4 +1,4 @@
-package com.tpn.adbautoenable;
+package eu.project_simple.adbautoenable;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -1,4 +1,4 @@
-package com.tpn.adbautoenable;
+package eu.project_simple.adbautoenable;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -126,7 +126,7 @@ public class AdbConfigService extends Service {
             }
         }
         Notification.Builder b = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? new Notification.Builder(this, CHANNEL_ID) : new Notification.Builder(this);
-        return b.setContentTitle("ADB Auto-Enable").setContentText("Reactive Watchdog Active").setSmallIcon(android.R.drawable.ic_menu_preferences).build();
+        return b.setContentTitle("ADB Auto-Enable").setContentText("Watchdog Active").setSmallIcon(android.R.drawable.ic_menu_preferences).build();
     }
 
     @Override public int onStartCommand(Intent i, int f, int s) { return START_STICKY; }

@@ -1,312 +1,110 @@
-# 🔧 adb-auto-enable
+# adb-auto-enable
 
-**Automatically enable wireless ADB debugging and switch to port 5555 on every boot - completely autonomous, no root required!**
+Automatically keeps wireless ADB debugging enabled on Meta Quest devices — no root required.
 
-Perfect for Chromecast with Google TV, Android TV boxes, and any Android device where you want persistent wireless ADB access without manual intervention.
+> **Security notice:** Wireless ADB provides full shell access to the device. Only use this on isolated, trusted networks. Never expose port 5555 to the internet or untrusted networks.
 
+## How it works
 
+- **On boot:** `BootReceiver` catches `BOOT_COMPLETED` / `LOCKED_BOOT_COMPLETED` and starts the service immediately, including during encrypted boot.
+- **Settings observer:** Watches the `adb_wifi_enabled` global setting. Any change to `0` is immediately reversed.
+- **Network callback:** Re-enforces ADB on every WiFi connection and validation event (covers network changes and reconnects).
+- **Periodic watchdog:** Fallback check every 60 seconds in case the above hooks are missed.
+- **Debounce:** A 500 ms guard prevents rapid-fire re-triggering.
+- **VrUsb popup (Meta Quest):** The accessibility service detects the "VrUsb" trust dialog by window title and sends TAB × 3 + ENTER to accept "Always allow", fully automatically.
 
-## Foreword
+## Requirements
 
-Android 14 introduces enhanced ADB security which disables and randomises the port used after sleep/reboot, breaking my automation setup. Auto ADB Enable automatically re-enables wireless ADB, maintaining remote access for non-interactive devices.
+- Meta Quest (tested on Meta Quest 3, and on several firmware versions)
+- `WRITE_SECURE_SETTINGS` permission granted once via ADB from a PC (see Setup)
+- Accessibility service enabled on the headset
 
-**However, this is likely a temporary workaround.** This app is part of a three-app ecosystem designed to progressively eliminate my ADB dependency:
+## Setup
 
-- **[Auto ADB Enable](https://github.com/mouldybread/adb-auto-enable)** (this app) - Stopgap to maintain ADB access
-- **[Display Launcher](https://github.com/mouldybread/DisplayLauncher)** - ADB-free app control via REST API
-- **[Android Stream Viewer](https://github.com/mouldybread/android-stream-viewer)** - ADB-free camera display with web configuration
-
-Used together, Display Launcher and Stream Viewer eliminate the need for ADB entirely. Display Launcher handles app launching (including Stream Viewer with specific cameras), while Stream Viewer provides fully web-configurable camera displays. Auto ADB Enable remains available for edge cases, but the long-term goal is complete ADB-free operation.
-
-> [!WARNING]
-> **SECURITY WARNING:** This application enables Android Debug Bridge (ADB) on port 5555, which provides remote access to your device with full system privileges. While ADB connections require RSA key authentication (users must accept the connection on first pairing), **once a computer is authorized, it has permanent unrestricted access** to install applications, access all data, execute shell commands, and take complete control of your device without further prompts. Additionally, the RSA authentication prompt is vulnerable to overlay attacks where malicious apps can trick users into authorizing connections. **This app should ONLY be used on isolated or trusted networks** (such as a home network behind a firewall with no port forwarding) and **NEVER on public WiFi, guest networks, or any network you do not fully control**. Exposing ADB to the internet or untrusted networks can result in complete device compromise if an attacker gains authorization, either through social engineering, overlay attacks, or physical access to previously paired computers. Use this tool only on devices you own and ensure your network is properly secured with a firewall blocking external access to port 5555.
-
-<p align="center">
-  <img src="gui.png" alt="Auto ADB Web Interface" style="width:75%; height:auto;">
-</p>
-
-## 🚫 Limitations
-
-- Tested only on CCwGTV. May not work at all on wired devices.
-
-## ✨ Features
-
-- 🚀 **Fully Autonomous**: Automatically enables wireless debugging and switches to port 5555 on every boot
-- 📱 **No Root Required**: Works on non-rooted devices with a one-time pairing via the web UI
-- 🌐 **Web UI**: Clean web interface at `http://device-ip:9093` for status, pairing, and live logs
-- 🔄 **Smart Retry**: Implements retry logic with WiFi connection monitoring for reliability
-- 🔐 **Auto-Permission Grant**: Automatically grants itself WRITE_SECURE_SETTINGS after pairing (no PC required!)
-- 📋 **Live Logs**: View real-time logs directly in the web interface with copy-to-clipboard functionality
-- 🛡️ **Background Persistence**: Web server runs in a foreground service, survives app backgrounding
-
-## 🎬 How It Works
-
-1. **One-Time Pairing**: App pairs with itself via localhost, storing authentication keys
-2. **Auto-Grant Permission**: After pairing, app automatically grants itself WRITE_SECURE_SETTINGS permission via ADB
-3. **Boot Detection**: On device boot, service starts automatically (with WiFi monitoring and 60s stabilization delay)
-4. **Enable Wireless Debugging**: Enables wireless debugging via `Settings.Global`
-5. **Port Discovery**: Discovers the random ADB port using mDNS or port scanning
-6. **Self-Connection**: Connects to local ADB daemon using stored authentication keys
-7. **Port Switch**: Sends `tcpip:5555` command to ADB daemon to switch to fixed port
-8. **Done!**: ADB is now available on port 5555 for external connections - completely autonomous!
-
-## 📋 Requirements
-
-- Android 13+ (tested on Chromecast with Google TV)
-- WiFi connection
-- No PC or ADB required after initial APK installation!
-
-## 🚀 Quick Start
-
-### 1. Installation
-
-Download and install the APK from [Releases](https://github.com/mouldybread/adb-auto-enable/releases), or build from source:
+### 1. Build and install
 
 ```bash
-git clone https://github.com/mouldybread/adb-auto-enable.git
+git clone https://github.com/your-org/adb-auto-enable.git
 cd adb-auto-enable
 ./gradlew assembleRelease
 adb install app/build/outputs/apk/release/app-release.apk
 ```
 
-### 2. Initial Pairing (No PC Required!)
+Or download a pre-built APK from Releases.
 
-1. Open the app or navigate to `http://your-device-ip:9093` in a browser
-2. On your Android device:
-   - Go to **Settings → Developer Options → Wireless Debugging**
-   - Tap **"Pair device with pairing code"**
-3. Enter the **pairing code** and **pairing port** into the web interface
-4. Click **"Pair Device"**
-5. The app will automatically attempt to grant itself permissions!
+### 2. Grant WRITE_SECURE_SETTINGS (one-time)
 
-### 3. Verify Setup
-
-1. Check the web UI status - Permission should show "✓ Granted"
-2. Click **"Switch to Port 5555 Now"** to test the configuration
-3. Check "ADB Port 5555" status - should show "✓ Available"
-
-### 4. Test Auto-Boot
-
-Reboot your device:
+This permission cannot be granted from within the app. Connect via USB and run:
 
 ```bash
-adb reboot
+adb shell pm grant eu.project_simple.adbautoenable android.permission.WRITE_SECURE_SETTINGS
 ```
 
-Wait about 90 seconds (60s boot delay + 30s for configuration), then connect:
+### 3. Enable the accessibility service
+
+On the headset:
+
+1. Settings → Accessibility
+2. Find **ADB Auto-Enable** and enable it
+3. Accept the confirmation prompt
+
+The service is also enabled programmatically at startup, but manual activation ensures it survives reboots cleanly.
+
+### 4. Launch the app
+
+Open **ADB Auto-Enable** once (after installing) to start the foreground service. After that it starts automatically on every boot.
+
+## Project structure
+
+```
+app/src/main/
+├── java/eu/project_simple/adbautoenable/
+│   ├── MainActivity.java                  # Starts AdbConfigService, then exits
+│   ├── AdbConfigService.java              # Foreground watchdog service
+│   ├── BootReceiver.java                  # Boot broadcast receiver
+│   └── AdbPopupAccessibilityService.java  # Meta Quest VrUsb popup handler
+├── AndroidManifest.xml
+└── res/
+    ├── xml/adb_popup_accessibility_config.xml
+    └── values/strings.xml
+```
+
+## Troubleshooting
+
+**Check permission status:**
 
 ```bash
-adb connect your-device-ip:5555
+adb shell dumpsys package eu.project_simple.adbautoenable | grep WRITE_SECURE_SETTINGS
 ```
 
-## 🌐 Web Interface
+Expected: `android.permission.WRITE_SECURE_SETTINGS: granted=true`
 
-Access the web interface at `http://device-ip:9093` to:
-
-- ✅ View system status (permissions, pairing, port availability)
-- 🔗 Perform one-time pairing (no PC required!)
-- 🔄 Manually trigger port switch
-- 🧪 Test the boot configuration sequence
-- 📋 View live logs with auto-refresh and copy-to-clipboard
-- 📊 Monitor last boot status and discovered ports
-
-## 🛠️ Configuration
-
-### Adjust Boot Delay
-
-Edit `AdbConfigService.java`:
-
-```java
-private static final int INITIAL_BOOT_DELAY_SECONDS = 60; // Adjust as needed
-```
-
-### Adjust Retry Settings
-
-```java
-private static final int MAX_RETRY_ATTEMPTS = 3;
-private static final int RETRY_DELAY_SECONDS = 15;
-```
-
-### Change Web Server Port
-
-Edit `AdbConfigService.java` and `MainActivity.java`:
-
-```java
-private static final int WEB_SERVER_PORT = 9093; // Change port
-```
-
-## 🐛 Troubleshooting
-
-### Permission Not Granted / Auto-Grant Failed
-
-If auto-grant fails, you can manually grant the permission from a computer:
-
-**1. Verify Permission Status:**
+**Re-grant permission after reinstall:**
 
 ```bash
-adb shell dumpsys package com.tpn.adbautoenable | grep WRITE_SECURE_SETTINGS
+adb shell pm grant eu.project_simple.adbautoenable android.permission.WRITE_SECURE_SETTINGS
 ```
 
-You should see:
-```
-android.permission.WRITE_SECURE_SETTINGS: granted=true
-```
-
-**2. Manual Permission Grant:**
-
-If permission is not granted, connect via USB and run:
+**Force-restart the service:**
 
 ```bash
-adb shell pm grant com.tpn.adbautoenable android.permission.WRITE_SECURE_SETTINGS
+adb shell am force-stop eu.project_simple.adbautoenable
+adb shell am start -n eu.project_simple.adbautoenable/.MainActivity
 ```
 
-**3. Common Issues:**
-
-**Issue: Permission Monitoring Blocked the Grant** (OnePlus, ColorOS, Xiaomi devices)
-
-On your Android device:
-1. Go to **Settings → Developer Options**
-2. Find **"Disable Permission Monitoring"** and enable it
-3. Toggle **USB Debugging OFF and back ON**
-4. Try pairing again in the web UI
-
-**Issue: App Was Running When Permission Was Granted**
+**View live logs:**
 
 ```bash
-adb shell am force-stop com.tpn.adbautoenable
-adb shell pm grant com.tpn.adbautoenable android.permission.WRITE_SECURE_SETTINGS
+adb logcat -s ADBAutoEnable ADBAutoEnable.A11y
 ```
 
-**Issue: Permission State Is "Stuck"**
+**Reset permissions if stuck:**
 
 ```bash
-adb shell cmd appops reset com.tpn.adbautoenable
-adb shell pm grant com.tpn.adbautoenable android.permission.WRITE_SECURE_SETTINGS
+adb shell cmd appops reset eu.project_simple.adbautoenable
+adb shell pm grant eu.project_simple.adbautoenable android.permission.WRITE_SECURE_SETTINGS
 ```
 
-### Boot Configuration Not Running
+---
 
-Check logs in the web UI at `http://device-ip:9093` or via ADB:
-
-```bash
-adb logcat -s ADBAutoEnable
-```
-
-Look for:
-- `"Boot event detected, starting ADB configuration service..."`
-- `"Waiting for WiFi connection..."`
-- `"Successfully configured ADB on port 5555!"`
-
-### Port Switch Fails
-
-1. Verify permission is granted (see above)
-2. Check pairing status in web UI - must show "✓ Paired"
-3. Try manual trigger via web UI button
-4. Check live logs in web UI for detailed error messages
-
-### WiFi Takes Too Long to Connect
-
-Increase the WiFi wait timeout in `AdbConfigService.java`:
-
-```java
-int maxWaitSeconds = 120; // Increase to 180 or more
-```
-
-### Service Crashes on Boot
-
-Check for foreground service permission errors:
-```bash
-adb logcat | grep -i "foreground"
-```
-
-Ensure `AndroidManifest.xml` has:
-```xml
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-```
-
-### Web Server Not Accessible
-
-The web server runs on port 9093 in a foreground service. If you can't access it:
-
-1. Check that the service is running:
-   ```bash
-   adb shell dumpsys activity services | grep AdbConfigService
-   ```
-
-2. Verify the device IP address in the app's main screen
-
-3. Try accessing from the same network: `http://device-ip:9093`
-
-## 📁 Project Structure
-
-```
-adb-auto-enable/
-├── app/src/main/java/com/tpn/adbautoenable/
-│   ├── MainActivity.java          # Main activity that starts the service
-│   ├── AdbConfigService.java      # Foreground service with web server
-│   ├── BootReceiver.java          # Boot broadcast receiver
-│   ├── AdbHelper.java             # ADB protocol implementation
-│   └── WebServer.java             # NanoHTTPD web interface with live logs
-├── app/src/main/AndroidManifest.xml
-└── README.md
-```
-
-## 🔧 Technical Details
-
-### ADB Protocol Implementation
-
-The app implements the ADB wire protocol:
-- **CONNECT** message with `host::features` service
-- **AUTH** signature/token exchange for authentication
-- **OPEN** service channel to ADB daemon
-- **WRITE** commands like `tcpip:5555` and `pm grant`
-
-Authentication keys are stored in `/data/data/com.tpn.adbautoenable/files/adb_keys/`.
-
-### Boot Process Flow
-
-```
-LOCKED_BOOT_COMPLETED → BootReceiver → AdbConfigService (Foreground)
-  ↓
-Start Web Server (port 9093)
-  ↓
-Wait for WiFi (up to 2 min)
-  ↓
-Wait for system stabilization (60s)
-  ↓
-Enable wireless debugging
-  ↓
-Wait 10s for ADB daemon
-  ↓
-Discover port (mDNS → fallback to scan)
-  ↓
-Connect to local ADB
-  ↓
-Send tcpip:5555 command
-  ↓
-Success! (with 3 retry attempts if needed)
-```
-
-### Self-Grant Process
-
-```
-User Pairs via Web UI (localhost:random-port)
-  ↓
-Pairing successful, keys stored
-  ↓
-App discovers current ADB port (mDNS/scan)
-  ↓
-App connects to localhost:discovered-port
-  ↓
-App executes: shell:pm grant com.tpn.adbautoenable android.permission.WRITE_SECURE_SETTINGS
-  ↓
-Permission granted autonomously!
-```
-
-## 🙏 Acknowledgments
-
-- Google, for forcing my hardware to update consequently creating this mess
-- [This Home Assistant Issue](https://github.com/home-assistant/core/issues/148359)
-- Inspired by various Tasker projects and Magisk modules
-- Uses [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd) for embedded web server
-- Uses [libadb-android](https://github.com/MuntashirAkon/libadb-android) for ADB protocol implementation
+Forked from [mouldybread/adb-auto-enable](https://github.com/mouldybread/adb-auto-enable).
