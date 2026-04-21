@@ -25,11 +25,20 @@ public class AdbConfigService extends Service {
     private static final String TAG = "ADBAutoEnable";
     private static final String CHANNEL_ID = "ADBAutoEnableChannel";
     private static final long DEBOUNCE_MS = 500; 
+    private static final long WATCHDOG_INTERVAL_MS = 60_000; // 1 minute fallback
 
     private long lastActionTime = 0;
     private final Handler handler = new Handler();
     private ContentObserver adbObserver;
     private ConnectivityManager.NetworkCallback networkCallback;
+
+    private final Runnable watchdogTask = new Runnable() {
+        @Override
+        public void run() {
+            triggerHook("Periodic Watchdog");
+            handler.postDelayed(this, WATCHDOG_INTERVAL_MS);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -39,6 +48,9 @@ public class AdbConfigService extends Service {
         
         ensureA11yEnabled();
         registerHooks();
+        
+        // Start periodic fallback
+        handler.postDelayed(watchdogTask, WATCHDOG_INTERVAL_MS);
         
         // Immediate check
         triggerHook("Service Start");
@@ -123,6 +135,7 @@ public class AdbConfigService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        handler.removeCallbacks(watchdogTask);
         if (adbObserver != null) getContentResolver().unregisterContentObserver(adbObserver);
         if (networkCallback != null) ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE)).unregisterNetworkCallback(networkCallback);
     }
