@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ADB Auto Enable</string>
+    <string name="accessibility_service_description">Auto-clicks the wireless-ADB trust popup on boot so no user action is needed.</string>
 </resources>

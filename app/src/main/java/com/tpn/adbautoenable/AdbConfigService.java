@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -34,6 +35,8 @@ public class AdbConfigService extends Service {
 
     private volatile boolean isConfiguring = false;
     private volatile boolean isMonitoring = false;
+    private volatile long lastEnableTimestampMs = 0;
+    private static final long ENABLE_DEBOUNCE_MS = 10_000;
 
     private ConnectivityManager.NetworkCallback networkCallback;
     private ContentObserver adbSettingObserver;
@@ -44,7 +47,13 @@ public class AdbConfigService extends Service {
         super.onCreate();
         Log.i(TAG, "AdbConfigService onCreate()");
         createNotificationChannel();
-        startForeground(1, createNotification("ADB Auto-Enable active"));
+        Notification n = createNotification("ADB Auto-Enable active");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else {
+            startForeground(1, n);
+        }
+        ensureAccessibilityServiceEnabled();
         registerAdbSettingObserver();
         registerNetworkCallback();
     }
@@ -69,8 +78,8 @@ public class AdbConfigService extends Service {
                 }
                 startMonitoringLoop();
             }).start();
-        } else if (!bootConfig) {
-            // Service restarted by Android (START_STICKY) — enable immediately then monitor
+        } else if (!bootConfig && !isConfiguring) {
+            // Service restarted or manual start — enable immediately then monitor
             new Thread(() -> {
                 configureAdbWithRetries();
                 startMonitoringLoop();
@@ -115,10 +124,16 @@ public class AdbConfigService extends Service {
             @Override
             public void onChange(boolean selfChange) {
                 int current = Settings.Global.getInt(getContentResolver(), "adb_wifi_enabled", 0);
-                if (current != 1) {
-                    Log.w(TAG, "ContentObserver: adb_wifi_enabled changed to 0 — re-enabling");
-                    configureAdbWithRetries();
+                if (current == 1) return;
+                // When we write 1, the system briefly resets to 0 while the trust popup
+                // is pending. Skip retries during that window — the accessibility
+                // service will click the popup and the setting will flip to 1.
+                if (System.currentTimeMillis() - lastEnableTimestampMs < ENABLE_DEBOUNCE_MS) {
+                    Log.i(TAG, "ContentObserver: recent enable in flight, skipping retry");
+                    return;
                 }
+                Log.w(TAG, "ContentObserver: adb_wifi_enabled changed to 0 — re-enabling");
+                configureAdbWithRetries();
             }
         };
 
@@ -158,10 +173,13 @@ public class AdbConfigService extends Service {
                 try {
                     Thread.sleep(MONITOR_INTERVAL_SECONDS * 1000L);
                     int current = Settings.Global.getInt(getContentResolver(), "adb_wifi_enabled", 0);
-                    if (current != 1) {
-                        Log.w(TAG, "Poll: ADB disabled — re-enabling");
-                        configureAdbWithRetries();
+                    if (current == 1) continue;
+                    if (System.currentTimeMillis() - lastEnableTimestampMs < ENABLE_DEBOUNCE_MS) {
+                        Log.i(TAG, "Poll: recent enable in flight, skipping retry");
+                        continue;
                     }
+                    Log.w(TAG, "Poll: ADB disabled — re-enabling");
+                    configureAdbWithRetries();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -233,6 +251,7 @@ public class AdbConfigService extends Service {
 
     private boolean enableAdb() {
         try {
+            lastEnableTimestampMs = System.currentTimeMillis();
             Settings.Global.putInt(getContentResolver(), "adb_wifi_enabled", 1);
             Log.i(TAG, "adb_wifi_enabled = 1");
             return true;
@@ -242,6 +261,40 @@ public class AdbConfigService extends Service {
         } catch (Exception e) {
             Log.e(TAG, "Failed to enable ADB", e);
             return false;
+        }
+    }
+
+    // --- Accessibility service self-enable ---
+    //
+    // The wireless-debugging trust popup (com.oculus.os.vrusb/.WifiDebuggingAlertActivity)
+    // is shown once per reboot on Meta Quest because Meta's AdbService clears its
+    // in-memory trusted-BSSID list on boot. We can't call IAdbManager.allowWirelessDebugging()
+    // directly (needs MANAGE_DEBUGGING, signature|privileged, not grantable via pm grant).
+    // Instead we register our own AccessibilityService that auto-clicks "Always allow"
+    // when the popup appears. WRITE_SECURE_SETTINGS lets us self-enable it.
+
+    private static final String A11Y_SERVICE_COMPONENT =
+            "com.tpn.adbautoenable/com.tpn.adbautoenable.AdbPopupAccessibilityService";
+
+    private void ensureAccessibilityServiceEnabled() {
+        try {
+            String enabled = Settings.Secure.getString(getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (enabled == null) enabled = "";
+            if (!enabled.contains(A11Y_SERVICE_COMPONENT)) {
+                String updated = enabled.isEmpty()
+                        ? A11Y_SERVICE_COMPONENT
+                        : enabled + ":" + A11Y_SERVICE_COMPONENT;
+                Settings.Secure.putString(getContentResolver(),
+                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, updated);
+                Log.i(TAG, "Enabled accessibility service: " + A11Y_SERVICE_COMPONENT);
+            }
+            Settings.Secure.putInt(getContentResolver(),
+                    Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+        } catch (SecurityException e) {
+            Log.e(TAG, "Missing WRITE_SECURE_SETTINGS — cannot enable a11y service", e);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to enable accessibility service", e);
         }
     }
 
