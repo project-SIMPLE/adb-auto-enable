@@ -12,31 +12,29 @@ import android.view.KeyEvent;
 import java.util.List;
 
 /**
- * Accessibility Service that specifically targets the Meta Quest Wireless ADB trust popup.
- * Since Meta's system windows often report a NULL root to A11y services, this service
- * uses a 'blind' keyboard navigation sequence to click the "Always allow" button.
+ * Event-driven Accessibility Service for Meta Quest.
+ * Blindly navigates the VrUsb trust popup using keyboard events.
  */
 public class AdbPopupAccessibilityService extends AccessibilityService {
     private static final String TAG = "ADBAutoEnable.A11y";
-    private static final long SCAN_INTERVAL_MS = 1000;
+    private static final long COOLDOWN_MS = 1000;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable scanRunnable = new Runnable() {
-        @Override
-        public void run() {
-            scanAndClick();
-            handler.postDelayed(this, SCAN_INTERVAL_MS);
-        }
-    };
+    private long lastActionTime = 0;
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // Trigger an immediate scan on any window or state change
-        handler.removeCallbacks(scanRunnable);
-        handler.post(scanRunnable);
+        // Only scan when windows change or state changes
+        int type = event.getEventType();
+        if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || 
+            type == AccessibilityEvent.TYPE_WINDOWS_CHANGED) {
+            scanAndClick();
+        }
     }
 
     private void scanAndClick() {
+        if (System.currentTimeMillis() - lastActionTime < COOLDOWN_MS) return;
+
         SparseArray<List<AccessibilityWindowInfo>> byDisplay = getWindowsOnAllDisplays();
         if (byDisplay == null) return;
 
@@ -46,7 +44,7 @@ public class AdbPopupAccessibilityService extends AccessibilityService {
             for (AccessibilityWindowInfo w : windows) {
                 CharSequence title = w.getTitle();
                 if (title != null && title.toString().contains("VrUsb")) {
-                    Log.i(TAG, "VrUsb popup detected. Executing blind trust sequence.");
+                    Log.i(TAG, "VrUsb detected. Triggering trust sequence.");
                     performBlindSequence();
                     return; 
                 }
@@ -54,42 +52,28 @@ public class AdbPopupAccessibilityService extends AccessibilityService {
         }
     }
 
-    /**
-     * Executes a keyboard sequence to navigate the standard AlertActivity:
-     * [Allow] -> TAB -> [Cancel] -> TAB -> [Always Allow] -> ENTER
-     */
     private void performBlindSequence() {
-        Log.d(TAG, "Sequence: 3x TAB, 1x ENTER");
+        lastActionTime = System.currentTimeMillis();
+        Log.d(TAG, "TAB x3, ENTER");
         
         sendKey(KeyEvent.KEYCODE_TAB);
-        handler.postDelayed(() -> sendKey(KeyEvent.KEYCODE_TAB), 150);
-        handler.postDelayed(() -> sendKey(KeyEvent.KEYCODE_TAB), 300);
-        handler.postDelayed(() -> sendKey(KeyEvent.KEYCODE_ENTER), 450);
+        handler.postDelayed(() -> sendKey(KeyEvent.KEYCODE_TAB), 100);
+        handler.postDelayed(() -> sendKey(KeyEvent.KEYCODE_TAB), 200);
+        handler.postDelayed(() -> sendKey(KeyEvent.KEYCODE_ENTER), 300);
     }
 
     private void sendKey(int keyCode) {
         try {
-            // We use 'input keyevent' which is reliable when WRITE_SECURE_SETTINGS is granted
-            String cmd = "input keyevent " + keyCode;
-            Runtime.getRuntime().exec(cmd);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to send key: " + keyCode, e);
-        }
+            Runtime.getRuntime().exec("input keyevent " + keyCode);
+        } catch (Exception ignored) {}
     }
 
-    @Override
-    public void onInterrupt() {}
+    @Override public void onInterrupt() {}
 
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        Log.i(TAG, "Service Connected");
-        handler.post(scanRunnable);
-    }
-
-    @Override
-    public boolean onUnbind(android.content.Intent intent) {
-        handler.removeCallbacks(scanRunnable);
-        return super.onUnbind(intent);
+        Log.i(TAG, "Hook Connected");
+        scanAndClick(); // Initial check
     }
 }
