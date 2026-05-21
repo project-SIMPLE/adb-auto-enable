@@ -107,4 +107,4 @@ adb shell pm grant eu.project_simple.adbautoenable android.permission.WRITE_SECU
 
 ---
 
-Forked from [mouldybread/adb-auto-enable](https://github.com/mouldybread/adb-auto-enable).
+Technical blog post : https://arthurbrugiere.fr/blog/mq3-wireless-adb/
