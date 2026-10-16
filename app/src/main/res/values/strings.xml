@@ -1,4 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ADB Auto Enable</string>
+    <string name="app_name">ADB Auto-Enable</string>
     <string name="accessibility_service_description">Auto-clicks the wireless-ADB trust popup on boot so no user action is needed.</string>
+
+    <!-- Main UI -->
+    <string name="app_subtitle">Wireless ADB Manager &amp; Watchdog</string>
+    <string name="refresh">Refresh</string>
+
+    <!-- ADB Wireless -->
+    <string name="adb_wireless_title">Wireless ADB</string>
+    <string name="adb_wireless_desc">Enable wireless debugging on this device</string>
+    <string name="status_enabled">Enabled</string>
+    <string name="status_disabled">Disabled</string>
+
+    <!-- Watchdog -->
+    <string name="watchdog_title">Auto-Enable Watchdog</string>
+    <string name="watchdog_desc">Monitors network &amp; settings to automatically keep Wireless ADB active</string>
+    <string name="status_running">Running</string>
+    <string name="status_stopped">Stopped</string>
+
+    <!-- Network & Ports -->
+    <string name="connection_info_title">Network &amp; Ports</string>
+    <string name="ip_address_label">Device IP:</string>
+    <string name="ip_not_connected">Wi-Fi Disconnected</string>
+    <string name="scanning_ports">Scanning for ADB ports…</string>
+    <string name="no_ports_found">No active ADB ports detected</string>
+    <string name="ports_adb_disabled">Wireless ADB is disabled. Enable it above to listen for connections.</string>
+    <string name="copy_command">Copy Command</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+
+    <!-- Permissions Error Banner (Red) -->
+    <string name="perm_error_title">Permission Required (WRITE_SECURE_SETTINGS)</string>
+    <string name="perm_error_desc">WRITE_SECURE_SETTINGS is not granted. This permission is required to enable wireless ADB and auto-configure accessibility. Connect the device via USB to a computer and run:</string>
+    <string name="perm_grant_cmd">adb shell pm grant eu.project_simple.adbautoenable android.permission.WRITE_SECURE_SETTINGS</string>
+
+    <!-- Accessibility Banner (Amber Warning) -->
+    <string name="a11y_warning_title">Accessibility Not Configured</string>
+    <string name="a11y_warning_desc">The auto-click accessibility service is disabled. It is required to automatically dismiss the Meta Quest trust dialog on boot.\n\nMetaOS hides standard accessibility settings. You can open the AOSP settings window or run the ADB command below:</string>
+    <string name="a11y_enable_cmd">adb shell "settings put secure enabled_accessibility_services eu.project_simple.adbautoenable/eu.project_simple.adbautoenable.AdbPopupAccessibilityService &amp;&amp; settings put secure accessibility_enabled 1"</string>
+    <string name="btn_open_a11y_settings">Open Accessibility Settings</string>
+    <string name="btn_rerun_a11y">Rerun Auto Configuration</string>
+    <string name="a11y_autoconfig_success">Accessibility service configured and enabled!</string>
+    <string name="a11y_autoconfig_failed">Auto-configuration failed. Ensure WRITE_SECURE_SETTINGS is granted or use the ADB command.</string>
+
+    <!-- Quick Actions -->
+    <string name="open_termux">Open in Termux</string>
+
+    <!-- Footer -->
+    <string name="footer_docs">Technical Blog Post &amp; Docs</string>
 </resources>
