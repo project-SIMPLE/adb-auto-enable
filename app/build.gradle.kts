@@ -10,13 +10,13 @@ android {
         applicationId = "eu.project_simple.adbautoenable"
         minSdk = 21
         targetSdk = 34
-        versionCode = (project.findProperty("versionCode") as String? ?: "1").toInt()
-        versionName = project.findProperty("versionName") as String? ?: "dev"
+        versionCode = (project.findProperty("versionCode") as String? ?: "3").toInt()
+        versionName = project.findProperty("versionName") as String? ?: "2.1.0"
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "keystore.jks")
+            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "../keystore.jks")
             storePassword = System.getenv("KEYSTORE_PASSWORD")
             keyAlias = System.getenv("KEY_ALIAS")
             keyPassword = System.getenv("KEY_PASSWORD")
@@ -35,10 +35,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
 dependencies {
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("org.jmdns:jmdns:3.5.8")
 }
