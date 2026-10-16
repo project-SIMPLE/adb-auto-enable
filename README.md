@@ -107,4 +107,4 @@ adb shell pm grant eu.project_simple.adbautoenable android.permission.WRITE_SECU
 
 ---
 
-Technical blog post : https://arthurbrugiere.fr/blog/mq3-wireless-adb/
+Technical blog post : https://arthurbrugiere.fr/blog/2026/05/mq3-wireless-adb/
