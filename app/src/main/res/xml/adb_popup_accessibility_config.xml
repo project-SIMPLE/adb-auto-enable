@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Keep this service as passive as possible (see issue #2):
+    - No canPerformGestures: it makes the system install an accessibility InputFilter
+      that every input event goes through, which breaks some Horizon OS input (e.g. floor setup).
+    - Only the window events we actually handle, so apps don't generate events for us.
+    - flagReportViewIds is needed to find the popup button by its view id.
+    - isAccessibilityTool: the popup is marked accessibility-data-sensitive, so its window
+      content is hidden from services that don't declare themselves as accessibility tools.
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagDefault|flagReportViewIds|flagIncludeNotImportantViews"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
     android:canRetrieveWindowContent="true"
-    android:canPerformGestures="true"
+    android:isAccessibilityTool="true"
     android:notificationTimeout="100"
     android:description="@string/accessibility_service_description" />
