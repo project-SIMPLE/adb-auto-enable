@@ -29,6 +29,12 @@ public class AdbPopupAccessibilityService extends AccessibilityService {
     private static final long RETRY_DELAY_MS = 250;
     private static final int MAX_RETRIES = 20;
 
+    private static volatile boolean isServiceConnected = false;
+
+    public static boolean isConnected() {
+        return isServiceConnected;
+    }
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     private int retriesLeft = 0;
 
@@ -99,12 +105,14 @@ public class AdbPopupAccessibilityService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        isServiceConnected = true;
         Log.i(TAG, "Hook Connected");
         scan(); // Initial check
     }
 
     @Override
     public void onDestroy() {
+        isServiceConnected = false;
         handler.removeCallbacks(retryTask);
         super.onDestroy();
     }

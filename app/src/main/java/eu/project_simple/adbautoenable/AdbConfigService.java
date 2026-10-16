@@ -3,6 +3,7 @@ package eu.project_simple.adbautoenable;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -24,8 +26,25 @@ import android.util.Log;
 public class AdbConfigService extends Service {
     private static final String TAG = "ADBAutoEnable";
     private static final String CHANNEL_ID = "ADBAutoEnableChannel";
+    private static final int NOTIFICATION_ID = 1;
     private static final long DEBOUNCE_MS = 500; 
     private static final long WATCHDOG_INTERVAL_MS = 60_000; // 1 minute fallback
+
+    private static volatile boolean isServiceRunning = false;
+
+    public interface ServiceStateListener {
+        void onServiceStateChanged(boolean isRunning);
+    }
+
+    private static volatile ServiceStateListener stateListener;
+
+    public static void setServiceStateListener(ServiceStateListener listener) {
+        stateListener = listener;
+    }
+
+    public static boolean isRunning() {
+        return isServiceRunning;
+    }
 
     private long lastActionTime = 0;
     private final Handler handler = new Handler();
@@ -43,10 +62,14 @@ public class AdbConfigService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        isServiceRunning = true;
+        if (stateListener != null) {
+            stateListener.onServiceStateChanged(true);
+        }
         Log.i(TAG, "Service Starting");
-        startForeground(1, createNotification());
+        promoteToForeground();
         
-        ensureA11yEnabled();
+        ensureA11yEnabled(this);
         registerHooks();
         
         // Start periodic fallback
@@ -54,6 +77,24 @@ public class AdbConfigService extends Service {
         
         // Immediate check
         triggerHook("Service Start");
+    }
+
+    private void promoteToForeground() {
+        try {
+            Notification notification = createNotification();
+            if (Build.VERSION.SDK_INT >= 34) {
+                try {
+                    startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+                } catch (Throwable t) {
+                    Log.w(TAG, "startForeground with specialUse failed, falling back: " + t.getMessage());
+                    startForeground(NOTIFICATION_ID, notification);
+                }
+            } else {
+                startForeground(NOTIFICATION_ID, notification);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to startForeground: " + e.getMessage(), e);
+        }
     }
 
     private void registerHooks() {
@@ -106,15 +147,15 @@ public class AdbConfigService extends Service {
         }
     }
 
-    private void ensureA11yEnabled() {
+    public static void ensureA11yEnabled(Context context) {
         try {
-            String component = getPackageName() + "/" + AdbPopupAccessibilityService.class.getName();
-            String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            String component = context.getPackageName() + "/" + AdbPopupAccessibilityService.class.getName();
+            String enabled = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
             if (enabled == null || !enabled.contains(component)) {
-                Settings.Secure.putString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, 
+                Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, 
                     (enabled == null || enabled.isEmpty()) ? component : enabled + ":" + component);
             }
-            Settings.Secure.putInt(getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+            Settings.Secure.putInt(context.getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED, 1);
         } catch (Exception ignored) {}
     }
 
@@ -122,18 +163,49 @@ public class AdbConfigService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null && nm.getNotificationChannel(CHANNEL_ID) == null) {
-                nm.createNotificationChannel(new NotificationChannel(CHANNEL_ID, "ADB Hook", NotificationManager.IMPORTANCE_MIN));
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_ID,
+                        "ADB Auto-Enable Service",
+                        NotificationManager.IMPORTANCE_LOW
+                );
+                channel.setDescription("Monitors and automatically keeps Wireless ADB enabled");
+                nm.createNotificationChannel(channel);
             }
         }
-        Notification.Builder b = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? new Notification.Builder(this, CHANNEL_ID) : new Notification.Builder(this);
-        return b.setContentTitle("ADB Auto-Enable").setContentText("Watchdog Active").setSmallIcon(android.R.drawable.ic_menu_preferences).build();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pi = PendingIntent.getActivity(
+                this, 0, intent,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
+                        (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) :
+                        PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        Notification.Builder b = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                new Notification.Builder(this, CHANNEL_ID) :
+                new Notification.Builder(this);
+        return b.setContentTitle("ADB Auto-Enable")
+                .setContentText("Watchdog Active")
+                .setSmallIcon(android.R.drawable.ic_menu_preferences)
+                .setOngoing(true)
+                .setContentIntent(pi)
+                .build();
     }
 
-    @Override public int onStartCommand(Intent i, int f, int s) { return START_STICKY; }
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        promoteToForeground();
+        triggerHook("onStartCommand");
+        return START_STICKY;
+    }
     @Override public IBinder onBind(Intent i) { return null; }
 
     @Override
     public void onDestroy() {
+        isServiceRunning = false;
+        if (stateListener != null) {
+            stateListener.onServiceStateChanged(false);
+        }
         super.onDestroy();
         handler.removeCallbacks(watchdogTask);
         if (adbObserver != null) getContentResolver().unregisterContentObserver(adbObserver);
