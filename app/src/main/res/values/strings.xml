@@ -42,4 +42,12 @@
 
     <!-- Quick Actions -->
     <string name="open_termux">Open in Termux</string>
+
+    <!-- Footer: project & partners -->
+    <string name="partners_title">SIMPLE project is co-funded by:</string>
+    <string name="version_footer">%1$s %2$s · Part of the SIMPLE project</string>
+    <string name="logo_simple_desc">SIMPLE project logo</string>
+    <string name="logo_eu_desc">Co-funded by the European Union</string>
+    <string name="logo_ird_desc">IRD, French National Research Institute for Sustainable Development</string>
+    <string name="logo_global_gateway_desc">Global Gateway</string>
 </resources>

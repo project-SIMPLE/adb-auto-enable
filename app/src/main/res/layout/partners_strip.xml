@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Partner logos side by side, in this order: Global Gateway, EU, IRD.
+     White surface: the logos are designed for light backgrounds. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:background="@drawable/partners_background"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:padding="20dp">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/logo_global_gateway_height"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/logo_global_gateway_desc"
+        android:src="@drawable/logo_global_gateway" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/logo_eu_height"
+        android:layout_marginStart="@dimen/logo_spacing"
+        android:layout_marginEnd="@dimen/logo_spacing"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/logo_eu_desc"
+        android:src="@drawable/logo_eu_cofunded" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/logo_ird_height"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/logo_ird_desc"
+        android:src="@drawable/logo_ird" />
+
+</LinearLayout>

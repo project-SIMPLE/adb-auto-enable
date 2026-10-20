@@ -4,6 +4,9 @@
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/on_primary</item>
         <item name="colorSecondary">@color/secondary</item>
+        <!-- Tonal buttons (refresh, Termux) -->
+        <item name="colorSecondaryContainer">@color/tonal_container</item>
+        <item name="colorOnSecondaryContainer">@color/text_primary</item>
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:statusBarColor">@color/window_background</item>
         <item name="android:navigationBarColor">@color/window_background</item>

@@ -1,34 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand & Accent -->
-    <color name="primary">#00BFA5</color>
-    <color name="on_primary">#FFFFFF</color>
-    <color name="secondary">#64B5F6</color>
+    <!-- Brand & Accent (from the SIMPLE logo) -->
+    <color name="primary">#6BCDDB</color>
+    <color name="on_primary">#0B2228</color>
+    <color name="secondary">#5BACCE</color>
 
     <!-- Background & Surface -->
-    <color name="window_background">#121216</color>
-    <color name="card_background">#1C1C22</color>
-    <color name="card_stroke">#2D2D38</color>
-    <color name="code_background">#0E0E12</color>
-    <color name="code_stroke">#282832</color>
+    <color name="window_background">#0E1318</color>
+    <color name="card_background">#161D24</color>
+    <color name="card_stroke">#26313C</color>
+    <color name="code_background">#0A0E12</color>
+    <color name="code_stroke">#222C36</color>
+    <color name="tonal_container">#22303B</color>
+    <color name="partners_background">#FFFFFF</color>
+    <color name="launcher_background">#FFFFFF</color>
 
     <!-- Typography -->
-    <color name="text_primary">#F4F4F6</color>
-    <color name="text_secondary">#9CA3AF</color>
-    <color name="text_muted">#6B7280</color>
+    <color name="text_primary">#F2F5F7</color>
+    <color name="text_secondary">#9AA6B2</color>
+    <color name="text_muted">#69757F</color>
 
     <!-- Status Colors -->
-    <color name="status_green">#10B981</color>
-    <color name="status_green_bg">#1A10B981</color>
-    <color name="status_green_stroke">#3310B981</color>
+    <color name="status_green">#7ED15B</color>
+    <color name="status_green_bg">#1A7ED15B</color>
+    <color name="status_green_stroke">#407ED15B</color>
 
-    <color name="status_amber">#F59E0B</color>
-    <color name="status_amber_bg">#1AF59E0B</color>
-    <color name="status_amber_stroke">#33F59E0B</color>
+    <color name="status_amber">#F5B53D</color>
+    <color name="status_amber_bg">#1AF5B53D</color>
+    <color name="status_amber_stroke">#40F5B53D</color>
 
-    <color name="status_red">#EF4444</color>
-    <color name="status_red_bg">#1AEF4444</color>
-    <color name="status_red_stroke">#33EF4444</color>
+    <color name="status_red">#F06464</color>
+    <color name="status_red_bg">#1AF06464</color>
+    <color name="status_red_stroke">#40F06464</color>
 
-    <color name="status_gray_bg">#1A6B7280</color>
+    <color name="status_gray_bg">#1A9AA6B2</color>
 </resources>

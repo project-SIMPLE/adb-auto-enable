@@ -112,6 +112,17 @@ public class MainActivity extends AppCompatActivity {
 
         btnRefresh = findViewById(R.id.btnRefresh);
         btnOpenTermux = findViewById(R.id.btnOpenTermux);
+
+        TextView textVersion = findViewById(R.id.textVersion);
+        textVersion.setText(getString(R.string.version_footer, getString(R.string.app_name), getVersionName()));
+    }
+
+    private String getVersionName() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            return "";
+        }
     }
 
     private void setupListeners() {

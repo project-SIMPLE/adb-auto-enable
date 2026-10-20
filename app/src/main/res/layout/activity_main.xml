@@ -7,35 +7,45 @@
     android:fillViewport="true">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        style="@style/ContentColumn"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="20dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="20dp">
 
-        <!-- Top Bar: Title & Refresh Button -->
+        <!-- Header: SIMPLE logo, title & refresh button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/logo_simple_desc"
+                android:src="@drawable/logo_simple" />
+
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/textAppTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/app_name"
                     android:textColor="@color/text_primary"
-                    android:textSize="24sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/textAppSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
@@ -54,118 +64,71 @@
                 app:iconTint="@color/text_primary" />
         </LinearLayout>
 
-        <!-- Error Card 1: Missing WRITE_SECURE_SETTINGS (Red) -->
+        <!-- Error Card: Missing WRITE_SECURE_SETTINGS -->
         <LinearLayout
             android:id="@+id/cardPermissionWarning"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            style="@style/Card"
+            android:layout_marginTop="20dp"
             android:background="@drawable/card_error_background"
-            android:orientation="vertical"
-            android:padding="16dp"
             android:visibility="gone"
             tools:visibility="visible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:drawablePadding="8dp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:contentDescription="@string/perm_error_title"
-                    android:src="@drawable/ic_error" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/perm_error_title"
-                    android:textColor="@color/status_red"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="@string/perm_error_title"
+                android:textColor="@color/status_red"
+                android:textSize="16sp"
+                app:drawableStartCompat="@drawable/ic_error" />
 
             <TextView
+                style="@style/CardBody"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/perm_error_desc"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:text="@string/perm_error_desc" />
 
             <TextView
                 android:id="@+id/textPermCommand"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/code_box_bg"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="monospace"
-                android:padding="12dp"
+                style="@style/CodeBox"
                 android:text="@string/perm_grant_cmd"
-                android:textColor="@color/status_red"
-                android:textSize="12sp" />
+                android:textColor="@color/status_red" />
         </LinearLayout>
 
-        <!-- Warning Card 2: Inactive Accessibility Service (Amber) -->
+        <!-- Warning Card: Inactive Accessibility Service -->
         <LinearLayout
             android:id="@+id/cardA11yWarning"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            style="@style/Card"
             android:background="@drawable/card_warning_background"
-            android:orientation="vertical"
-            android:padding="16dp"
             android:visibility="gone"
             tools:visibility="visible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:drawablePadding="8dp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:contentDescription="@string/a11y_warning_title"
-                    android:src="@drawable/ic_warning" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/a11y_warning_title"
-                    android:textColor="@color/status_amber"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="@string/a11y_warning_title"
+                android:textColor="@color/status_amber"
+                android:textSize="16sp"
+                app:drawableStartCompat="@drawable/ic_warning" />
 
             <TextView
+                style="@style/CardBody"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/a11y_warning_desc"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:text="@string/a11y_warning_desc" />
 
             <TextView
                 android:id="@+id/textA11yCommand"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/code_box_bg"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="monospace"
-                android:padding="12dp"
+                style="@style/CodeBox"
                 android:text="@string/a11y_enable_cmd"
-                android:textColor="@color/primary"
-                android:textSize="12sp" />
+                android:textColor="@color/primary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnOpenA11ySettings"
@@ -183,12 +146,11 @@
 
         <!-- Card: Controls & Status -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/card_background"
-            android:orientation="vertical"
-            android:padding="16dp">
+            style="@style/Card"
+            android:layout_marginTop="20dp">
+
+            <!-- Switch states come from the system settings: saveEnabled="false" keeps a
+                 restored state from firing the listeners when the activity is recreated -->
 
             <!-- Control 1: Wireless ADB -->
             <LinearLayout
@@ -200,6 +162,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -210,35 +173,25 @@
                         android:orientation="horizontal">
 
                         <TextView
+                            style="@style/CardTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/adb_wireless_title"
-                            android:textColor="@color/text_primary"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
+                            android:text="@string/adb_wireless_title" />
 
                         <TextView
                             android:id="@+id/badgeAdbStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
+                            style="@style/StatusBadge"
                             android:background="@drawable/status_badge_green"
-                            android:paddingStart="8dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="8dp"
-                            android:paddingBottom="3dp"
                             android:text="@string/status_enabled"
-                            android:textColor="@color/status_green"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:textColor="@color/status_green" />
                     </LinearLayout>
 
                     <TextView
+                        style="@style/CardBody"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
                         android:text="@string/adb_wireless_desc"
-                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -247,10 +200,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:minWidth="48dp"
-                    android:minHeight="48dp" />
+                    android:minHeight="48dp"
+                    android:saveEnabled="false" />
             </LinearLayout>
 
-            <!-- Divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
@@ -268,6 +221,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -278,35 +232,25 @@
                         android:orientation="horizontal">
 
                         <TextView
+                            style="@style/CardTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/watchdog_title"
-                            android:textColor="@color/text_primary"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
+                            android:text="@string/watchdog_title" />
 
                         <TextView
                             android:id="@+id/badgeWatchdogStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
+                            style="@style/StatusBadge"
                             android:background="@drawable/status_badge_green"
-                            android:paddingStart="8dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="8dp"
-                            android:paddingBottom="3dp"
                             android:text="@string/status_running"
-                            android:textColor="@color/status_green"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:textColor="@color/status_green" />
                     </LinearLayout>
 
                     <TextView
+                        style="@style/CardBody"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
                         android:text="@string/watchdog_desc"
-                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -315,19 +259,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:minWidth="48dp"
-                    android:minHeight="48dp" />
+                    android:minHeight="48dp"
+                    android:saveEnabled="false" />
             </LinearLayout>
-
         </LinearLayout>
 
         <!-- Card: Network & Ports -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/card_background"
-            android:orientation="vertical"
-            android:padding="16dp">
+        <LinearLayout style="@style/Card">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -336,13 +274,11 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    style="@style/CardTitle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/connection_info_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:text="@string/connection_info_title" />
 
                 <ProgressBar
                     android:id="@+id/progressScanning"
@@ -350,45 +286,33 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:indeterminate="true"
+                    android:indeterminateTint="@color/primary"
                     android:visibility="gone"
                     tools:visibility="visible" />
             </LinearLayout>
 
-            <!-- IP Address Display -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/textDeviceIp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:contentDescription="@string/ip_address_label"
+                android:drawablePadding="8dp"
+                android:fontFamily="monospace"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:drawableStartCompat="@drawable/ic_wifi"
+                tools:text="192.168.1.50" />
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:contentDescription="@string/ip_address_label"
-                    android:src="@drawable/ic_wifi" />
-
-                <TextView
-                    android:id="@+id/textDeviceIp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:fontFamily="monospace"
-                    tools:text="192.168.1.50"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Endpoints Container -->
             <LinearLayout
                 android:id="@+id/layoutEndpointsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:orientation="vertical" />
 
-            <!-- Empty / Status Message -->
             <TextView
                 android:id="@+id/textNoEndpoints"
                 android:layout_width="match_parent"
@@ -397,22 +321,39 @@
                 android:text="@string/scanning_ports"
                 android:textColor="@color/text_muted"
                 android:textSize="13sp" />
+
+            <!-- Visible only when Termux is installed -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenTermux"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:minHeight="48dp"
+                android:text="@string/open_termux"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:icon="@drawable/ic_terminal"
+                app:iconSize="18dp"
+                tools:visibility="visible" />
         </LinearLayout>
 
-        <!-- Quick Action: Termux (Visible only when installed) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnOpenTermux"
-            style="@style/Widget.Material3.Button.TonalButton"
+        <!-- Footer: project partners & version -->
+        <TextView
+            style="@style/SectionLabel"
+            android:text="@string/partners_title" />
+
+        <include layout="@layout/partners_strip" />
+
+        <TextView
+            android:id="@+id/textVersion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:minHeight="48dp"
-            android:text="@string/open_termux"
-            android:textSize="13sp"
-            android:visibility="gone"
-            app:icon="@drawable/ic_terminal"
-            app:iconSize="18dp"
-            tools:visibility="visible" />
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp"
+            tools:text="ADB Auto-Enable 2.1.0 · Part of the SIMPLE project" />
 
     </LinearLayout>
 
