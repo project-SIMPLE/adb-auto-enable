@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
@@ -14,18 +15,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
-        android:text="192.168.1.50:5555"
         android:textColor="@color/primary"
         android:textSize="17sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="192.168.1.50:5555" />
 
     <TextView
         android:id="@+id/textEndpointType"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
-        android:text="Standard TCP/IP"
         android:textColor="@color/text_secondary"
-        android:textSize="13sp" />
+        android:textSize="13sp"
+        tools:text="Standard TCP/IP" />
 
 </LinearLayout>

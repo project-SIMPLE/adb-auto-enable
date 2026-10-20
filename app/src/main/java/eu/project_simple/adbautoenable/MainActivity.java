@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private View cardA11yWarning;
     private TextView textPermCommand;
     private TextView textA11yCommand;
-    private MaterialButton btnRerunA11y;
     private MaterialButton btnOpenA11ySettings;
 
     private MaterialSwitch switchAdbWifi;
@@ -99,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         cardA11yWarning = findViewById(R.id.cardA11yWarning);
         textPermCommand = findViewById(R.id.textPermCommand);
         textA11yCommand = findViewById(R.id.textA11yCommand);
-        btnRerunA11y = findViewById(R.id.btnRerunA11y);
         btnOpenA11ySettings = findViewById(R.id.btnOpenA11ySettings);
 
         switchAdbWifi = findViewById(R.id.switchAdbWifi);
@@ -182,22 +180,6 @@ public class MainActivity extends AppCompatActivity {
         // Tap Accessibility Command to Copy
         textA11yCommand.setOnClickListener(v -> {
             copyToClipboard("ADB Command", getString(R.string.a11y_enable_cmd));
-        });
-
-        // Rerun Auto Configuration Button
-        btnRerunA11y.setOnClickListener(v -> {
-            if (hasWriteSecureSettings()) {
-                AdbConfigService.ensureA11yEnabled(this);
-                updateUiStates();
-                if (isAccessibilityActive()) {
-                    showToast(getString(R.string.a11y_autoconfig_success));
-                } else {
-                    showToast(getString(R.string.a11y_autoconfig_failed));
-                }
-            } else {
-                showToast(getString(R.string.a11y_autoconfig_failed));
-                updateUiStates();
-            }
         });
 
         // Open Accessibility Settings Button (Targeting standard AOSP settings on MetaOS)
@@ -388,13 +370,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startWatchdogService() {
-        Intent svc = new Intent(this, AdbConfigService.class);
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(svc);
-            } else {
-                startService(svc);
-            }
+            startForegroundService(new Intent(this, AdbConfigService.class));
         } catch (Exception e) {
             Log.e("MainActivity", "Error starting watchdog service: " + e.getMessage(), e);
         }

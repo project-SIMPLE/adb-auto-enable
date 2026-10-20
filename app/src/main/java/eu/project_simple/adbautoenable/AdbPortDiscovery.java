@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -89,7 +90,7 @@ public class AdbPortDiscovery {
             // Try preferred Wi-Fi or Ethernet interfaces first
             for (NetworkInterface intf : interfaces) {
                 if (!intf.isUp() || intf.isLoopback()) continue;
-                String name = intf.getName().toLowerCase();
+                String name = intf.getName().toLowerCase(Locale.ROOT);
                 if (name.startsWith("wlan") || name.startsWith("eth") || name.startsWith("rndis")) {
                     for (InetAddress addr : Collections.list(intf.getInetAddresses())) {
                         if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {

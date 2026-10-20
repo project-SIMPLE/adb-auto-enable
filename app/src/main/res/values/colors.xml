@@ -2,11 +2,8 @@
 <resources>
     <!-- Brand & Accent -->
     <color name="primary">#00BFA5</color>
-    <color name="primary_variant">#00897B</color>
-    <color name="primary_light">#E0F2F1</color>
     <color name="on_primary">#FFFFFF</color>
     <color name="secondary">#64B5F6</color>
-    <color name="secondary_variant">#1E88E5</color>
 
     <!-- Background & Surface -->
     <color name="window_background">#121216</color>
@@ -33,6 +30,5 @@
     <color name="status_red_bg">#1AEF4444</color>
     <color name="status_red_stroke">#33EF4444</color>
 
-    <color name="status_gray">#6B7280</color>
     <color name="status_gray_bg">#1A6B7280</color>
 </resources>

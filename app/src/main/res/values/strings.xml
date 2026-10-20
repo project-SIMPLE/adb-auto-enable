@@ -39,13 +39,7 @@
     <string name="a11y_warning_desc">The auto-click accessibility service is disabled. It is required to automatically dismiss the Meta Quest trust dialog on boot.\n\nMetaOS hides standard accessibility settings. You can open the AOSP settings window or run the ADB command below:</string>
     <string name="a11y_enable_cmd">adb shell "settings put secure enabled_accessibility_services eu.project_simple.adbautoenable/eu.project_simple.adbautoenable.AdbPopupAccessibilityService &amp;&amp; settings put secure accessibility_enabled 1"</string>
     <string name="btn_open_a11y_settings">Open Accessibility Settings</string>
-    <string name="btn_rerun_a11y">Rerun Auto Configuration</string>
-    <string name="a11y_autoconfig_success">Accessibility service configured and enabled!</string>
-    <string name="a11y_autoconfig_failed">Auto-configuration failed. Ensure WRITE_SECURE_SETTINGS is granted or use the ADB command.</string>
 
     <!-- Quick Actions -->
     <string name="open_termux">Open in Termux</string>
-
-    <!-- Footer -->
-    <string name="footer_docs">Technical Blog Post &amp; Docs</string>
 </resources>

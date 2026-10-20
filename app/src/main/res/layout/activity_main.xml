@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/window_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -169,24 +168,11 @@
                 android:textSize="12sp" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRerunA11y"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:minHeight="44dp"
-                android:text="@string/btn_rerun_a11y"
-                android:textSize="13sp"
-                app:icon="@drawable/ic_refresh"
-                app:iconGravity="textStart"
-                app:iconSize="18dp" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnOpenA11ySettings"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:minHeight="44dp"
                 android:text="@string/btn_open_a11y_settings"
                 android:textSize="13sp"
@@ -388,7 +374,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:fontFamily="monospace"
-                    android:text="192.168.1.50"
+                    tools:text="192.168.1.50"
                     android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
