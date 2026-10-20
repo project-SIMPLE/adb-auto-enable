@@ -160,31 +160,25 @@ public class AdbConfigService extends Service {
     }
 
     private Notification createNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager nm = getSystemService(NotificationManager.class);
-            if (nm != null && nm.getNotificationChannel(CHANNEL_ID) == null) {
-                NotificationChannel channel = new NotificationChannel(
-                        CHANNEL_ID,
-                        "ADB Auto-Enable Service",
-                        NotificationManager.IMPORTANCE_LOW
-                );
-                channel.setDescription("Monitors and automatically keeps Wireless ADB enabled");
-                nm.createNotificationChannel(channel);
-            }
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null && nm.getNotificationChannel(CHANNEL_ID) == null) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "ADB Auto-Enable Service",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("Monitors and automatically keeps Wireless ADB enabled");
+            nm.createNotificationChannel(channel);
         }
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pi = PendingIntent.getActivity(
                 this, 0, intent,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
-                        (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) :
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        Notification.Builder b = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                new Notification.Builder(this, CHANNEL_ID) :
-                new Notification.Builder(this);
-        return b.setContentTitle("ADB Auto-Enable")
+        return new Notification.Builder(this, CHANNEL_ID)
+                .setContentTitle("ADB Auto-Enable")
                 .setContentText("Watchdog Active")
                 .setSmallIcon(android.R.drawable.ic_menu_preferences)
                 .setOngoing(true)

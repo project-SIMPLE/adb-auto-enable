@@ -8,7 +8,8 @@ android {
 
     defaultConfig {
         applicationId = "eu.project_simple.adbautoenable"
-        minSdk = 21
+        // adb_wifi_enabled (Wireless debugging) and getWindowsOnAllDisplays() are API 30+
+        minSdk = 30
         targetSdk = 34
         versionCode = (project.findProperty("versionCode") as String? ?: "3").toInt()
         versionName = project.findProperty("versionName") as String? ?: "2.1.0"
