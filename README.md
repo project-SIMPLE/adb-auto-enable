@@ -6,16 +6,16 @@ Automatically keeps wireless ADB debugging enabled on Meta Quest devices — no 
 
 ## How it works
 
-- **On boot:** `BootReceiver` catches `BOOT_COMPLETED` / `LOCKED_BOOT_COMPLETED` and starts the service immediately, including during encrypted boot.
+- **On boot:** `BootReceiver` catches `BOOT_COMPLETED` and starts the watchdog service.
 - **Settings observer:** Watches the `adb_wifi_enabled` global setting. Any change to `0` is immediately reversed.
 - **Network callback:** Re-enforces ADB on every WiFi connection and validation event (covers network changes and reconnects).
 - **Periodic watchdog:** Fallback check every 60 seconds in case the above hooks are missed.
 - **Debounce:** A 500 ms guard prevents rapid-fire re-triggering.
-- **VrUsb popup (Meta Quest):** The accessibility service detects the "VrUsb" trust dialog by window title and sends TAB × 3 + ENTER to accept "Always allow", fully automatically.
+- **VrUsb popup (Meta Quest):** The accessibility service detects the "VrUsb" trust dialog by window title and clicks its "Always allow on this network" button (`android:id/button3`) through an accessibility node action, fully automatically. It listens to window events only and does not intercept input.
 
 ## Requirements
 
-- Meta Quest (tested on Meta Quest 3, and on several firmware versions)
+- Meta Quest on Android 11 (API 30) or later (tested on Meta Quest 3, and on several firmware versions)
 - `WRITE_SECURE_SETTINGS` permission granted once via ADB from a PC (see Setup)
 - Accessibility service enabled on the headset
 
@@ -23,14 +23,18 @@ Automatically keeps wireless ADB debugging enabled on Meta Quest devices — no 
 
 ### 1. Build and install
 
+Building requires JDK 17 or 21 (Gradle 8.13 does not run on newer JDKs). If your default JDK is newer, point Gradle to a supported one in `~/.gradle/gradle.properties` with `org.gradle.java.home=/path/to/jdk-21`.
+
 ```bash
-git clone https://github.com/your-org/adb-auto-enable.git
+git clone https://github.com/RoiArthurB/adb-auto-enable.git
 cd adb-auto-enable
-./gradlew assembleRelease
-adb install app/build/outputs/apk/release/app-release.apk
+./gradlew assembleDebug
+adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Or download a pre-built APK from Releases.
+Release builds (`./gradlew assembleRelease`) are signed and need `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` set in the environment.
+
+Or download a pre-built APK from [Releases](https://github.com/RoiArthurB/adb-auto-enable/releases). Pushing a `v*` tag builds, signs and publishes a new release through GitHub Actions.
 
 ### 2. Grant WRITE_SECURE_SETTINGS (Required)
 
@@ -142,7 +146,7 @@ adb shell am start -n eu.project_simple.adbautoenable/.MainActivity
 **View live logs:**
 
 ```bash
-adb logcat -s AdbConfigService MainActivity AdbPortDiscovery ADBAutoEnable.A11y
+adb logcat -s ADBAutoEnable ADBAutoEnable.A11y ADBAutoEnable.Discovery MainActivity
 ```
 
 **Reset permissions if stuck:**
